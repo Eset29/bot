@@ -1,0 +1,14 @@
+{
+    "business_name": "Магазин 'Atyrau Tech'",
+    "city": "Атырау",
+    "address": "ул. Сатпаева, 15, ТЦ 'Baizaar', 2 этаж",
+    "phone": "+7 701 123 45 67",
+    "instagram": "@atyrau_tech_example",
+    "working_hours": "10:00 - 20:00, без выходных",
+    "delivery_info": "Доставка через InDriver или Яндекс.Go по городу Атырау от 500 тенге.",
+    "top_products": [
+        "Чехлы для iPhone - 3000 тг",
+        "Зарядки Type-C - 2500 тг",
+        "PowerBank 10000mAh - 8000 тг"
+    ]
+}
