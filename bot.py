@@ -171,7 +171,13 @@ async def button_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
         path = f"downloads/{vid}_{chat_id}.m4a"
         await query.edit_message_text(s['downloading'])
         
-        ydl_opts = {'format': 'bestaudio[ext=m4a]/bestaudio', 'outtmpl': path, 'quiet': True, 'nopart': True}
+        ydl_opts = {
+            'format': 'bestaudio[ext=m4a]/bestaudio', 
+            'outtmpl': path, 
+            'quiet': True, 
+            'nopart': True,
+            'user_agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+        }
         
         try:
             if not os.path.exists('downloads'): os.makedirs('downloads')
@@ -194,7 +200,8 @@ async def button_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 except: pass
                 await query.delete_message()
         except Exception as e:
-            logging.error(f"Download error: {e}")
+            import traceback
+            logging.error(f"Download error for {vid}: {e}\n{traceback.format_exc()}")
             await query.edit_message_text(s['error'])
 
 async def post_init(application):
