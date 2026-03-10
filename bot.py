@@ -6,6 +6,9 @@ import random
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup, ReplyKeyboardMarkup, KeyboardButton
 from telegram.ext import ApplicationBuilder, MessageHandler, filters, ContextTypes, CommandHandler, CallbackQueryHandler
 import yt_dlp
+import threading
+from http.server import SimpleHTTPRequestHandler
+import socketserver
 
 # Настройка логирования
 logging.basicConfig(format='%(asctime)s - %(levelname)s - %(message)s', level=logging.INFO)
@@ -43,7 +46,7 @@ def load_config():
 
 config = load_config()
 BOT_NAME = "Music Flow"
-TELEGRAM_TOKEN = "8722574151:AAHfdtDkoq0Xc55ZTbHyMWapl63Awch3MeI"
+TELEGRAM_TOKEN = os.getenv("BOT_TOKEN")
 BOT_USERNAME = "MusicFlow_Bot"
 
 STRINGS = {
@@ -203,7 +206,17 @@ async def post_init(application):
     except:
         pass
 
+def run_health_check():
+    """Запускает простейший веб-сервер для Render, чтобы он не убивал процесс"""
+    port = int(os.environ.get("PORT", 8080))
+    with socketserver.TCPServer(("", port), SimpleHTTPRequestHandler) as httpd:
+        logging.info(f"Health check server started on port {port}")
+        httpd.serve_forever()
+
 if __name__ == "__main__":
+    # Запускаем Health Check в отдельном потоке
+    threading.Thread(target=run_health_check, daemon=True).start()
+    
     app = ApplicationBuilder().token(TELEGRAM_TOKEN).post_init(post_init).build()
     app.add_handler(CommandHandler("start", start))
     app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
