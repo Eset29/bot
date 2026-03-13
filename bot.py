@@ -87,7 +87,14 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return
 
     status_msg = await update.message.reply_text(s['searching'])
-    ydl_opts = {'extract_flat': True, 'quiet': True, 'no_warnings': True, 'check_formats': False, 'ignoreerrors': True}
+    ydl_opts = {
+        'extract_flat': True, 
+        'quiet': True, 
+        'no_warnings': True, 
+        'check_formats': False, 
+        'ignoreerrors': True,
+        'extractor_args': {'youtube': ['player_client=android']}
+    }
     
     try:
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
@@ -176,7 +183,7 @@ async def button_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
             'outtmpl': path, 
             'quiet': True, 
             'nopart': True,
-            'user_agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+            'extractor_args': {'youtube': ['player_client=android,web']}
         }
         
         try:

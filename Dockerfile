@@ -2,7 +2,7 @@ FROM python:3.10-slim
 
 # Устанавливаем системные зависимости (FFmpeg)
 RUN apt-get update && apt-get install -y \
-    ffmpeg \
+    ffmpeg nodejs \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
