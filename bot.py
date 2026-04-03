@@ -183,7 +183,7 @@ async def button_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await query.edit_message_text(s['downloading'])
         
         ydl_opts = {
-            'format': 'bestaudio[ext=m4a]/bestaudio', 
+            'format': 'bestaudio/best', 
             'outtmpl': path, 
             'quiet': True, 
             'nopart': True,
