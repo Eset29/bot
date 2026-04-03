@@ -1,7 +1,7 @@
-ffmpeg.exe
-ffplay.exe
-ffprobe.exe
-downloads/
-music_cache.json
+.env
 __pycache__/
 *.pyc
+downloads/
+music_cache.json
+bot_data.db
+.vscode/
