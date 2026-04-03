@@ -118,7 +118,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
             for e in info.get('entries', []):
                 if e:
                     d = e.get('duration')
-                    if d is not None and d < MAX_SONG_DURATION:
+                    if d is not None and 60 <= d < MAX_SONG_DURATION:
                         entries.append(e)
                         # Сохраняем ссылку в кэш
                         vid_id = str(e.get('id', ''))
@@ -142,7 +142,11 @@ def build_search_keyboard(results, page):
     for item in current_items:
         duration_sec = item.get('duration') or 0
         duration = f"{int(duration_sec//60):02d}:{int(duration_sec%60):02d}"
-        title = (item.get('title')[:35] + "..") if len(item.get('title', '')) > 38 else item.get('title')
+        uploader = item.get('uploader', '')
+        raw_title = item.get('title', '')
+        # Добавляем имя исполнителя, если оно не присутствует в названии трека
+        full_title = f"{uploader} - {raw_title}" if uploader and uploader not in raw_title else raw_title
+        title = (full_title[:35] + "..") if len(full_title) > 38 else full_title
         keyboard.append([InlineKeyboardButton(f"{duration} | {title}", callback_data=f"dl_{item['id']}")])
     total_pages = (len(results) + 7) // 8
     nav = [InlineKeyboardButton("◀️", callback_data=f"p_{page-1}") if page > 0 else InlineKeyboardButton(" ", callback_data="none"),
