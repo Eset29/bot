@@ -17,6 +17,7 @@ logging.basicConfig(format='%(asctime)s - %(levelname)s - %(message)s', level=lo
 
 CACHE_FILE = 'music_cache.json'
 SEARCH_CACHE = {} 
+URL_MAP = {}
 CACHE_LOCK = asyncio.Lock()
 MAX_SONG_DURATION = 600 
 
@@ -89,33 +90,39 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return
 
     status_msg = await update.message.reply_text(s['searching'])
+    cookie_file = 'cookies.txt' if os.path.exists('cookies.txt') else None
+    if cookie_file:
+        logging.info("🍪 Файл cookies.txt найден и подключен!")
+    else:
+        logging.warning("⚠️ Файл cookies.txt НЕ найден! YouTube может блокировать запросы.")
+
     ydl_opts = {
         'extract_flat': True, 
         'quiet': True, 
         'no_warnings': True, 
-        'check_formats': False, 
         'ignoreerrors': True,
-        'extractor_args': {'youtube': ['player_client=android,ios,web,mweb']},
-        'user_agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-        'cookiefile': 'cookies.txt' if os.path.exists('cookies.txt') else None,
         'noplaylist': True
     }
     
     try:
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
             loop = asyncio.get_event_loop()
-            info = await loop.run_in_executor(None, lambda: ydl.extract_info(f"ytsearch80:{query}", download=False))
+            # Ищем в SoundCloud (15 результатов)
+            info = await loop.run_in_executor(None, lambda: ydl.extract_info(f"scsearch15:{query}", download=False))
             
             if not info or 'entries' not in info:
                 await status_msg.edit_text("❌ Nothing found.")
                 return
 
             entries = []
-            for e in info['entries']:
+            for e in info.get('entries', []):
                 if e:
                     d = e.get('duration')
                     if d is not None and d < MAX_SONG_DURATION:
                         entries.append(e)
+                        # Сохраняем ссылку в кэш
+                        vid_id = str(e.get('id', ''))
+                        URL_MAP[vid_id] = e.get('url', e.get('webpage_url', ''))
             
             if not entries:
                 await status_msg.edit_text("❌ Nothing found (under 10 mins).")
@@ -183,14 +190,13 @@ async def button_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
         path = f"downloads/{vid}_{chat_id}.m4a"
         await query.edit_message_text(s['downloading'])
         
+        url_to_download = URL_MAP.get(vid, vid)
+        
         ydl_opts = {
-            'format': 'ba/b',
+            'format': 'ba*/ba/bestaudio/best',
             'outtmpl': path, 
             'quiet': True, 
             'nopart': True,
-            'extractor_args': {'youtube': ['player_client=android,ios,web,mweb']},
-            'user_agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-            'cookiefile': 'cookies.txt' if os.path.exists('cookies.txt') else None,
             'noplaylist': True
         }
         
@@ -198,7 +204,7 @@ async def button_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
             if not os.path.exists('downloads'): os.makedirs('downloads')
             with yt_dlp.YoutubeDL(ydl_opts) as ydl:
                 loop = asyncio.get_event_loop()
-                info = await loop.run_in_executor(None, lambda: ydl.extract_info(vid, download=True))
+                info = await loop.run_in_executor(None, lambda: ydl.extract_info(url_to_download, download=True))
                 # Проверка размера
                 if os.path.exists(path) and os.path.getsize(path) > 50 * 1024 * 1024:
                     await query.edit_message_text(s['too_large'])
