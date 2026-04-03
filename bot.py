@@ -107,22 +107,33 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     try:
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
             loop = asyncio.get_event_loop()
-            # Ищем в SoundCloud (15 результатов)
-            info = await loop.run_in_executor(None, lambda: ydl.extract_info(f"scsearch15:{query}", download=False))
+            # Ищем в SoundCloud (30 результатов, чтобы было из чего выбирать)
+            info = await loop.run_in_executor(None, lambda: ydl.extract_info(f"scsearch30:{query}", download=False))
             
             if not info or 'entries' not in info:
                 await status_msg.edit_text("❌ Nothing found.")
                 return
 
             entries = []
+            remixes = []
             for e in info.get('entries', []):
                 if e:
                     d = e.get('duration')
                     if d is not None and 60 <= d < MAX_SONG_DURATION:
-                        entries.append(e)
-                        # Сохраняем ссылку в кэш
                         vid_id = str(e.get('id', ''))
                         URL_MAP[vid_id] = e.get('url', e.get('webpage_url', ''))
+                        
+                        # Проверяем, ремикс ли это
+                        text_to_check = (e.get('title', '') + " " + e.get('uploader', '')).lower()
+                        is_remix = any(word in text_to_check for word in ['remix', 'reverb', 'slowed', 'sped', 'mashup', 'cover', 'edit', 'mix', 'bass', 'hardstyle', 'tiktok', '8d', 'instrumental'])
+                        
+                        if is_remix:
+                            remixes.append(e)
+                        else:
+                            entries.append(e)
+            
+            # Сначала чистые оригиналы, затем ремиксы в конец
+            entries.extend(remixes)
             
             if not entries:
                 await status_msg.edit_text("❌ Nothing found (under 10 mins).")
