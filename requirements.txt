@@ -1,0 +1,5 @@
+python-telegram-bot
+yt-dlp
+openai
+httpx
+python-dotenv
